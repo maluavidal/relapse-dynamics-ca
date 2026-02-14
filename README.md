@@ -50,17 +50,23 @@ relapse-dynamics-ca/
 │   ├── run_experiments.py
 │   ├── plot_figures.py
 │   ├── plot_spatial.py
+│   ├── plot_paper_figures.py
+│   ├── compute_fractal_dimension.py
+│   ├── analyze_topology.py
 │   ├── experiment_*_results.npy   # produced by run_experiments.py
-│   └── Fig*.png                   # produced by plot_figures.py, plot_spatial.py
-└── docs/                # Paper, and optional copy of figures
+│   └── Fig*.png                   # produced by plotting scripts
+└── docs/                # Paper, discrepancies note, optional copy of figures
 ```
 
 ## Files (`src/acdr/`)
 
 - **`rules.py`** — CA transition rules, neighbor counting (periodic boundaries), optional per-cell susceptibility for S→E, and Treatment (T) transitions: R→T (τ), T→C (θ), T→R (ρ).
 - **`run_experiments.py`** — Runs A, B, C; builds susceptibility at init; saves time series for R, E, C, T in `experiment_*_results.npy`.
-- **`plot_figures.py`** — Time-series: Fig1_Success (A), Fig2_Chronic (B), Fig3_Intervention (C vs B). Reads `.npy` from current working directory.
-- **`plot_spatial.py`** — Spatial snapshots: Fig3_Spatial (A), Fig4_Spatial_Intervention (C, snapshots around t=150).
+- **`plot_figures.py`** — Time-series: Fig1_Success (A), Fig2_Chronic (B), Fig3_Intervention (C vs B). Reads `.npy` from current working directory (or `docs/` if not present).
+- **`plot_spatial.py`** — Spatial snapshots: Fig3_Spatial (A), Fig4_Spatial_Intervention (C, snapshots around t=150). Uses `rules` and `run_experiments` for init/params.
+- **`plot_paper_figures.py`** — Standalone script that runs its own simulations and produces paper-style figures: Fig4_Dynamics (prevalence over time), Fig5_Intervention (stack plot R/T/C with intervention at t=150), Fig6_Spatial (morphology of B vs C at end of run). Does not use the `.npy` files.
+- **`compute_fractal_dimension.py`** — Runs the model to t=300 (and t=100) and reports the box-counting fractal dimension of the R-set for experiments A, B, C. **Requires** a `spatial_clusters` module providing `fractal_dimension_boxcounting` and `R_STATE`.
+- **`analyze_topology.py`** — Runs one replicate of B and C to a fixed time, then reports fractal dimension (box-counting), number of R-clusters, and largest cluster size. Uses `scipy.ndimage.label` for cluster analysis. Useful for topology/collapse metrics.
 
 ## How to execute the workflow
 
@@ -68,9 +74,9 @@ All commands below are run from the **`src/acdr/`** directory. Scripts read and 
 
 ### Prerequisites
 
-- **Python 3** with **NumPy** and **Matplotlib**:
+- **Python 3** with **NumPy** and **Matplotlib** (and **SciPy** for `analyze_topology.py`):
   ```bash
-  pip install numpy matplotlib
+  pip install numpy matplotlib scipy
   ```
 
 ### Step 1: Run experiments
@@ -104,6 +110,20 @@ python3 plot_spatial.py
 
 **Output:** `Fig3_Spatial.png`, `Fig4_Spatial_Intervention.png`
 
+### Additional scripts (optional)
+
+- **Paper-style figures (no `.npy` needed):** From `src/acdr/`, run  
+  `python3 plot_paper_figures.py`  
+  to generate **Fig4_Dynamics.png**, **Fig5_Intervention.png**, **Fig6_Spatial.png** (standalone simulation + plotting).
+
+- **Fractal dimension report:**  
+  `python3 compute_fractal_dimension.py`  
+  prints box-counting fractal dimension of the R-set for A, B, C at t=300 and t=100. Requires a `spatial_clusters` module.
+
+- **Topology / cluster stats:**  
+  `python3 analyze_topology.py`  
+  prints fractal dimension, number of R-clusters, and largest cluster size for one run of B and C at a fixed time.
+
 ### Run the full pipeline
 
 From the project root:
@@ -112,4 +132,4 @@ From the project root:
 cd src/acdr && python3 run_experiments.py && python3 plot_figures.py && python3 plot_spatial.py
 ```
 
-All figures are written in `src/acdr/`. Move or copy them (e.g. to `docs/`) if you want them in a different folder.
+Optional: run `python3 plot_paper_figures.py` for Fig4–Fig6, and/or `python3 analyze_topology.py` for topology metrics. All figures and outputs are written in `src/acdr/`. Move or copy them (e.g. to `docs/`) if you want them in a different folder.
